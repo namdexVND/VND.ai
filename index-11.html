@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>VND — Trợ lý AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0b; --bg-raised:#131315; --bg-sidebar:#0d0d0e;
+  --border:#232326; --border-soft:#1b1b1d;
+  --text:#ececec; --text-dim:#9a9a9f; --text-faint:#55555a;
+  --gold:#d43737; --gold-soft:rgba(212,55,55,.14); --gold-dim:#8f2e2e;
+  --bubble-user:#1c1c1f;
+  --font-display:'Be Vietnam Pro',sans-serif; --font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+::selection{background:var(--gold-soft)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2a2a2d;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+.hidden{display:none!important}
+
+.app{display:flex;height:100vh;height:100dvh;width:100vw}
+
+/* SIDEBAR */
+.sidebar{width:272px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border-soft);display:flex;flex-direction:column;transition:margin-left .22s ease,opacity .22s ease}
+.sidebar.collapsed{margin-left:-272px;opacity:0}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 16px 14px}
+.brand img{width:30px;height:30px;border-radius:8px;object-fit:cover;box-shadow:0 0 0 1px var(--border)}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:17px}
+.new-chat{margin:4px 12px 10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-raised);color:var(--text);display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13.5px;font-weight:500;transition:border-color .15s,background .15s}
+.new-chat:hover{border-color:var(--gold-dim);background:#17171a}
+.new-chat svg{width:15px;height:15px;flex-shrink:0}
+.history-label{padding:14px 18px 6px;font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em}
+.history{flex:1;overflow-y:auto;padding:0 8px;display:flex;flex-direction:column;gap:2px}
+.history-empty{padding:10px;font-size:12.5px;color:var(--text-faint)}
+.history-item{padding:9px 10px;border-radius:8px;font-size:13.5px;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.history-item .ttl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-item:hover,.history-item.active{background:var(--bg-raised);color:var(--text)}
+.history-item.active{box-shadow:inset 2px 0 0 var(--gold)}
+.history-item .del{opacity:0;flex-shrink:0;width:15px;height:15px;color:var(--text-faint)}
+.history-item:hover .del{opacity:1}
+@media (hover:none){.history-item .del{opacity:.7}}
+.history-item .del:hover{color:#e05c5c}
+.sidebar-foot{border-top:1px solid var(--border-soft);padding:10px 12px 12px}
+.foot-row{display:flex;align-items:center;gap:7px}
+.foot-btn{display:flex;align-items:center;gap:8px;color:var(--text-dim);background:none;border:none;cursor:pointer;font-size:13px;padding:8px;border-radius:7px;text-align:left;flex:1;min-width:0}
+.foot-btn:hover{background:var(--bg-raised);color:var(--text)}
+.foot-btn svg{width:15px;height:15px;flex-shrink:0}
+.icon-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
+.icon-btn:hover{background:var(--bg-raised);color:var(--text)}
+.icon-btn svg{width:18px;height:18px}
+.settings-gear-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg-raised)}
+.settings-gear-btn:hover{border-color:var(--gold-dim)}
+.account-box{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;background:var(--bg-raised);border:1px solid var(--border);flex:1;min-width:0}
+.account-avatar,.acc-tab-avatar{border-radius:50%;background:var(--gold-dim);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;overflow:hidden}
+.account-avatar{width:30px;height:30px;font-size:12.5px}
+.account-avatar img,.acc-tab-avatar img{width:100%;height:100%;object-fit:cover}
+.account-info{flex:1;min-width:0}
+.account-info .name{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.account-info .email{font-size:10.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.account-logout{background:none;border:none;color:var(--text-faint);cursor:pointer;display:flex}
+.account-logout:hover{color:#ff9a9a}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border-soft);flex-shrink:0}
+.topbar-title{font-family:var(--font-display);font-weight:600;font-size:14.5px;color:var(--text-dim)}
+.topbar-title b{color:var(--text);font-weight:600}
+.chat-scroll{flex:1;overflow-y:auto}
+.chat-inner{max-width:720px;margin:0 auto;padding:24px 20px 150px}
+
+.welcome{min-height:calc(100dvh - 230px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 10px}
+.welcome img{width:56px;height:56px;border-radius:16px;margin-bottom:20px;box-shadow:0 0 0 1px var(--border),0 12px 30px rgba(212,55,55,.08)}
+.welcome h1{font-family:var(--font-display);font-weight:700;font-size:26px;margin:0 0 8px}
+.welcome h1 span{color:var(--gold)}
+.welcome p{color:var(--text-dim);font-size:14.5px;margin:0 0 30px;max-width:420px;line-height:1.55}
+.suggest-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:560px}
+.suggest-card{text-align:left;background:var(--bg-raised);border:1px solid var(--border);border-radius:12px;padding:13px 14px;cursor:pointer;color:var(--text);transition:border-color .15s,transform .1s}
+.suggest-card:hover{border-color:var(--gold-dim)}
+.suggest-card:active{transform:scale(.985)}
+.suggest-card .t{font-size:13.5px;font-weight:600;margin-bottom:3px}
+.suggest-card .s{font-size:12.5px;color:var(--text-faint)}
+
+/* MESSAGES */
+.msg{display:flex;gap:14px;margin-bottom:26px;align-items:flex-start}
+.msg.user{flex-direction:row-reverse}
+.avatar{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-top:2px}
+.avatar.bot{background:var(--bg-raised);border:1px solid var(--border)}
+.avatar.bot img{width:100%;height:100%;object-fit:cover}
+.avatar.user{background:#29292d;color:var(--text-dim);font-size:11px;font-weight:700}
+.bubble-wrap{max-width:78%;min-width:0}
+.msg.user .bubble-wrap{display:flex;justify-content:flex-end}
+.bubble{font-size:14.5px;line-height:1.65;word-wrap:break-word;overflow-wrap:anywhere;min-width:0}
+.msg.user .bubble{background:var(--bubble-user);border:1px solid var(--border);border-radius:16px 16px 4px 16px;padding:10px 14px;white-space:pre-wrap}
+.msg.assistant .bubble{padding-top:3px}
+.msg.assistant .bubble.err{color:#ff9a9a}
+.bubble>*:first-child{margin-top:0}
+.bubble>*:last-child{margin-bottom:0}
+.bubble p{margin:0 0 10px}
+.bubble h1,.bubble h2,.bubble h3{font-family:var(--font-display);margin:16px 0 8px;line-height:1.3}
+.bubble h1{font-size:19px}.bubble h2{font-size:17px}.bubble h3{font-size:15.5px}
+.bubble ul,.bubble ol{margin:0 0 10px;padding-left:22px}
+.bubble li{margin:3px 0}
+.bubble a{color:#ff7a7a;text-decoration:underline}
+.bubble blockquote{margin:0 0 10px;padding:4px 12px;border-left:3px solid var(--gold-dim);color:var(--text-dim)}
+.bubble hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+.bubble code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.8px;background:#1a1a1d;border:1px solid var(--border);padding:1px 5px;border-radius:5px}
+.codeblock{margin:0 0 12px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#0f0f11}
+.codehead{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#161619;font-size:11.5px;color:var(--text-dim)}
+.code-copy{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;font-size:11px;padding:3px 8px;cursor:pointer}
+.code-copy:hover{color:var(--text);border-color:var(--gold-dim)}
+.codeblock pre{margin:0;padding:12px;overflow-x:auto}
+.codeblock pre code{background:none;border:none;padding:0;font-size:12.8px;line-height:1.55;white-space:pre}
+.tablewrap{overflow-x:auto;margin:0 0 12px}
+.bubble table{border-collapse:collapse;font-size:13.5px;min-width:60%}
+.bubble th,.bubble td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+.bubble th{background:#161619}
+.msg-actions{display:flex;gap:4px;margin-top:6px}
+.msg-actions button{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:11.5px;padding:3px 7px;border-radius:6px;display:flex;align-items:center;gap:4px}
+.msg-actions button:hover{background:var(--bg-raised);color:var(--text)}
+.msg-actions svg{width:13px;height:13px}
+.att-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.att-grid img{width:96px;height:96px;object-fit:cover;border-radius:10px}
+.att-file{font-size:11.5px;color:var(--text-dim);margin-bottom:4px}
+.typing{display:flex;gap:4px;padding-top:8px}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--gold-dim);animation:blink 1.3s infinite}
+.typing span:nth-child(2){animation-delay:.18s}
+.typing span:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+
+/* INPUT */
+.input-zone{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(to top,var(--bg) 60%,transparent);padding:24px 20px calc(16px + env(safe-area-inset-bottom,0px))}
+.input-inner{max-width:720px;margin:0 auto}
+.input-box{display:flex;align-items:flex-end;gap:8px;background:var(--bg-raised);border:1px solid var(--border);border-radius:20px;padding:8px 8px 8px 10px;transition:border-color .15s}
+.input-box:focus-within{border-color:var(--gold-dim)}
+.input-box textarea{flex:1;background:none;border:none;outline:none;resize:none;color:var(--text);font-size:14.5px;line-height:1.5;max-height:180px;padding:7px 0}
+.input-box textarea::placeholder{color:var(--text-faint)}
+.send-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--gold);color:#0a0a0b;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:opacity .15s,transform .1s}
+.send-btn:disabled{opacity:.35;cursor:default}
+.send-btn:not(:disabled):active{transform:scale(.92)}
+.send-btn svg{width:15px;height:15px}
+.input-hint{text-align:center;font-size:11.5px;color:var(--text-faint);margin-top:10px}
+.attach-wrap{position:relative;flex-shrink:0}
+.attach-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,color .15s,transform .15s}
+.attach-btn:hover{border-color:var(--gold-dim);color:var(--text)}
+.attach-btn.open{transform:rotate(45deg);color:var(--gold);border-color:var(--gold-dim)}
+.attach-btn svg{width:16px;height:16px}
+.attach-menu{position:absolute;left:0;bottom:calc(100% + 8px);background:var(--bg-sidebar);border:1px solid var(--border);border-radius:12px;padding:6px;min-width:168px;display:none;flex-direction:column;gap:1px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:20}
+.attach-menu.open{display:flex}
+.attach-menu button{display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--text);font-size:13px;padding:9px 10px;border-radius:8px;cursor:pointer;text-align:left}
+.attach-menu button:hover{background:var(--bg-raised)}
+.attach-menu svg{width:16px;height:16px;color:var(--text-dim);flex-shrink:0}
+.attach-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 8px}
+.attach-chip{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:5px 8px;font-size:11.5px;color:var(--text-dim);max-width:190px}
+.attach-chip img{width:22px;height:22px;border-radius:5px;object-fit:cover;flex-shrink:0}
+.attach-chip .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attach-chip .x{cursor:pointer;color:var(--text-faint);flex-shrink:0}
+.attach-chip .x:hover{color:#e05c5c}
+
+/* TẠO ẢNH */
+.mode-chip{display:inline-flex;align-items:center;gap:8px;background:var(--gold-soft);border:1px solid var(--gold-dim);color:var(--text);border-radius:20px;padding:4px 6px 4px 11px;font-size:12px;margin-bottom:8px}
+.mode-chip .x{cursor:pointer;color:var(--text-dim);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+.mode-chip .x:hover{background:rgba(0,0,0,.3);color:var(--text)}
+.mode-tag{font-size:11px;color:#ff8f8f;font-weight:600;margin-bottom:4px}
+.imggen{width:min(100%,420px)}
+.imggen-box{aspect-ratio:1/1;border-radius:14px;border:1px solid var(--border);background:var(--bg-raised);overflow:hidden;position:relative}
+.shimmer{position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(212,55,55,.18) 50%,transparent 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
+@keyframes shim{from{background-position:200% 0}to{background-position:-200% 0}}
+.imggen-label{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--text-dim)}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.imgcard{width:min(100%,460px)}
+.imgholder{border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--bg-raised);min-height:120px}
+.genimg{display:block;width:100%;height:auto;cursor:zoom-in}
+.img-skel{height:240px;position:relative}
+.img-missing{padding:26px 16px;font-size:12.5px;color:var(--text-faint);text-align:center;line-height:1.5}
+.imgnote{margin-top:8px;color:var(--text-dim)}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:150;padding:16px;cursor:zoom-out}
+.lightbox.open{display:flex}
+.lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+.lb-close{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg-raised);color:var(--text);cursor:pointer;font-size:15px}
+
+/* TOAST */
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#1f1f23;border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:10px;font-size:13px;z-index:200;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:tin .2s ease}
+@keyframes tin{from{opacity:0;transform:translate(-50%,8px)}}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+.overlay.open{display:flex}
+.modal{width:620px;max-width:94vw;background:var(--bg-sidebar);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-soft)}
+.modal-head h2{margin:0;font-family:var(--font-display);font-size:17px}
+.modal-close{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;width:28px;height:28px;border-radius:7px}
+.modal-close:hover{background:var(--bg-raised);color:var(--text)}
+.settings-layout{display:flex;min-height:420px;max-height:72vh}
+.settings-tabs{width:168px;flex-shrink:0;border-right:1px solid var(--border-soft);padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.settings-tab{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--text-dim);font-size:13px;padding:9px 10px;border-radius:8px;cursor:pointer;text-align:left;white-space:nowrap}
+.settings-tab svg{width:15px;height:15px;flex-shrink:0}
+.settings-tab:hover{background:var(--bg-raised);color:var(--text)}
+.settings-tab.active{background:var(--gold-soft);color:var(--text)}
+.settings-panels{flex:1;min-width:0;overflow-y:auto;padding:20px 22px}
+.settings-panel{display:none}
+.settings-panel.active{display:block}
+.settings-panel h3{font-family:var(--font-display);font-size:15px;margin:0 0 4px}
+.settings-panel .sub{color:var(--text-dim);font-size:12.5px;margin:0 0 18px;line-height:1.6}
+.pref-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border-soft);gap:12px}
+.pref-row:last-child{border-bottom:none}
+.pref-row .label{font-size:13px}
+.pref-row .hint{font-size:11px;color:var(--text-faint);margin-top:2px}
+.select-mini{background:var(--bg-raised);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 9px;font-size:12.5px;outline:none}
+.switch{position:relative;width:38px;height:22px;flex-shrink:0;border-radius:20px;background:var(--bg-raised);border:1px solid var(--border);cursor:pointer}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text-faint);transition:transform .15s,background .15s}
+.switch.on{background:var(--gold-soft);border-color:var(--gold-dim)}
+.switch.on::after{transform:translateX(16px);background:var(--gold)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px}
+.field input{width:100%;background:var(--bg-raised);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;outline:none}
+.field input:focus{border-color:var(--gold-dim)}
+.field .note{font-size:11px;color:var(--text-faint);margin-top:5px;line-height:1.5}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.btn{padding:8px 15px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg-raised);color:var(--text)}
+.btn.primary{background:var(--gold);color:#0a0a0b;border:none;font-weight:600}
+.btn:hover:not(:disabled){filter:brightness(1.1)}
+.btn:disabled{opacity:.5;cursor:default}
+.acc-tab-box{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--bg-raised);margin-bottom:16px}
+.acc-tab-avatar{width:46px;height:46px;font-size:17px}
+.acc-tab-info .name{font-size:14px;font-weight:600}
+.acc-tab-info .email{font-size:12px;color:var(--text-dim)}
+.plan-badge{display:inline-block;margin-top:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--gold-soft);color:var(--gold);text-transform:uppercase}
+.signed-out-box{text-align:center;padding:30px 10px}
+.signed-out-box svg{width:34px;height:34px;color:var(--text-faint);margin-bottom:10px}
+.signed-out-box p{color:var(--text-dim);font-size:13px;margin:0 0 16px}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.plan-card{border:1px solid var(--border);border-radius:14px;padding:16px 14px;display:flex;flex-direction:column;background:var(--bg-raised)}
+.plan-card.featured{border-color:var(--gold-dim);box-shadow:0 0 0 1px var(--gold-dim)}
+.pname{font-family:var(--font-display);font-weight:700;font-size:14.5px}
+.pbadge{align-self:flex-start;font-size:10px;font-weight:700;color:var(--gold);background:var(--gold-soft);padding:2px 7px;border-radius:20px;margin-bottom:6px}
+.pprice{font-size:20px;font-weight:800;margin:6px 0 2px}
+.pprice span{font-size:11.5px;font-weight:500;color:var(--text-dim)}
+.plan-card ul{list-style:none;margin:12px 0 16px;padding:0;flex:1}
+.plan-card li{font-size:12px;color:var(--text-dim);padding:4px 0 4px 18px;position:relative;line-height:1.5}
+.plan-card li::before{content:'✓';position:absolute;left:0;color:var(--gold);font-weight:700}
+.plan-card .btn{width:100%;text-align:center}
+
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:39}
+.sidebar-backdrop.open{display:block}
+
+/* AUTH */
+.auth-screen{position:fixed;inset:0;background:rgba(10,10,11,.96);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{width:380px;max-width:100%;background:var(--bg-sidebar);border:1px solid var(--border);border-radius:18px;padding:28px 24px;position:relative;max-height:96vh;overflow-y:auto}
+.auth-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-faint);font-size:15px;cursor:pointer;width:26px;height:26px;border-radius:50%}
+.auth-close:hover{background:var(--bg-raised);color:var(--text)}
+.auth-card img.logo{width:40px;height:40px;border-radius:10px;display:block;margin:0 auto 14px}
+.auth-card h1{font-family:var(--font-display);font-size:19px;text-align:center;margin:0 0 4px}
+.auth-card p.sub{text-align:center;color:var(--text-dim);font-size:12.5px;margin:0 0 20px}
+.auth-tabs{display:flex;background:var(--bg-raised);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:18px}
+.auth-tabs button{flex:1;background:none;border:none;color:var(--text-dim);font-size:12.5px;font-weight:600;padding:8px 0;border-radius:8px;cursor:pointer}
+.auth-tabs button.active{background:var(--gold);color:#0a0a0b}
+.auth-error{display:none;background:rgba(212,55,55,.12);border:1px solid var(--gold-dim);color:#ff9a9a;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:14px}
+.auth-error.show{display:block}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--text-faint);font-size:11.5px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.google-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:#fff;color:#222;border:1px solid var(--border);border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer}
+.google-btn:hover{filter:brightness(.96)}
+.google-btn:disabled{opacity:.6}
+.google-btn svg{width:17px;height:17px}
+.auth-switch{text-align:center;font-size:12px;color:var(--text-dim);margin-top:16px}
+.auth-switch a{color:var(--gold);cursor:pointer}
+.auth-terms{text-align:center;font-size:10.5px;line-height:1.6;color:var(--text-faint);margin-top:12px}
+.auth-terms a{color:var(--text-dim);text-decoration:underline}
+
+@media (max-width:760px){
+  .sidebar{position:fixed;z-index:40;height:100dvh;box-shadow:0 0 40px rgba(0,0,0,.5)}
+  .suggest-grid{grid-template-columns:1fr}
+  .bubble-wrap{max-width:90%}
+  .settings-layout{flex-direction:column;max-height:78vh}
+  .settings-tabs{width:auto;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border-soft)}
+  .plan-grid{grid-template-columns:1fr}
+  .chat-inner{padding:18px 14px 150px}
+}
+</style>
+</head>
+<body>
+
+<!-- Firebase Auth -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyApnozW2ho0mtNneYXTiAnp2SFvmQQy6Nk",
+  authDomain: "vndai-d5ca9.firebaseapp.com",
+  projectId: "vndai-d5ca9",
+  storageBucket: "vndai-d5ca9.firebasestorage.app",
+  messagingSenderId: "330439773677",
+  appId: "1:330439773677:web:48f5672c5072914bc4abe4",
+  measurementId: "G-5TKMDGS3WW"
+};
+const fbAuth = getAuth(initializeApp(firebaseConfig));
+setPersistence(fbAuth, browserLocalPersistence).catch(()=>{});
+
+function mapAuthError(err){
+  switch((err && err.code) || ''){
+    case 'auth/email-already-in-use': return 'Email này đã được đăng ký.';
+    case 'auth/invalid-email': return 'Email không hợp lệ.';
+    case 'auth/weak-password': return 'Mật khẩu cần tối thiểu 6 ký tự.';
+    case 'auth/missing-password': return 'Vui lòng nhập mật khẩu.';
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found': return 'Email hoặc mật khẩu không đúng.';
+    case 'auth/too-many-requests': return 'Bạn thử sai quá nhiều lần. Vui lòng thử lại sau.';
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request': return 'Cửa sổ đăng nhập Google đã bị đóng.';
+    case 'auth/popup-blocked': return 'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy cho phép popup.';
+    case 'auth/network-request-failed': return 'Lỗi mạng. Vui lòng kiểm tra kết nối.';
+    default: return 'Có lỗi xảy ra. Vui lòng thử lại.';
+  }
+}
+const wrap = p => p.catch(e => { throw new Error(mapAuthError(e)); });
+window.vndAuth = {
+  register: (name,email,pass) => wrap(createUserWithEmailAndPassword(fbAuth,email,pass).then(async c=>{ if(name) await updateProfile(c.user,{displayName:name}); return c.user; })),
+  login: (email,pass) => wrap(signInWithEmailAndPassword(fbAuth,email,pass).then(c=>c.user)),
+  loginGoogle: () => wrap(signInWithPopup(fbAuth,new GoogleAuthProvider()).then(c=>c.user)),
+  logout: () => signOut(fbAuth),
+  onChange: cb => onAuthStateChanged(fbAuth, cb)
+};
+window.dispatchEvent(new Event('vndAuthReady'));
+</script>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen hidden" id="authScreen">
+  <div class="auth-card">
+    <button type="button" class="auth-close" id="authCloseBtn" aria-label="Đóng">✕</button>
+    <img class="logo" src="https://raw.githubusercontent.com/namdexVND/VNDhinhanh/refs/heads/main/1000048959.png" alt="VND">
+    <h1>Chào mừng đến VND</h1>
+    <p class="sub">Đăng nhập hoặc tạo tài khoản để tiếp tục</p>
+    <div class="auth-tabs">
+      <button type="button" id="tabLogin" class="active">Đăng nhập</button>
+      <button type="button" id="tabRegister">Đăng ký</button>
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="ban@email.com" autocomplete="email"></div>
+      <div class="field"><label>Mật khẩu</label><input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
+      <button type="submit" class="btn primary" style="width:100%">Đăng nhập</button>
+    </form>
+    <form id="registerForm" class="hidden">
+      <div class="field"><label>Tên hiển thị</label><input type="text" id="regName" placeholder="Tên của bạn" autocomplete="name"></div>
+      <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="ban@email.com" autocomplete="email"></div>
+      <div class="field"><label>Mật khẩu</label><input type="password" id="regPassword" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password"></div>
+      <div class="field"><label>Nhập lại mật khẩu</label><input type="password" id="regPassword2" placeholder="••••••••" autocomplete="new-password"></div>
+      <button type="submit" class="btn primary" style="width:100%">Tạo tài khoản</button>
+      <div class="auth-terms">Bằng cách đăng ký, bạn đồng ý với <a href="dieu-khoan.html" target="_blank">Điều khoản sử dụng</a> và <a href="chinh-sach-bao-mat.html" target="_blank">Chính sách bảo mật</a> của chúng tôi.</div>
+    </form>
+    <div class="auth-divider">hoặc</div>
+    <button type="button" class="google-btn" id="googleLoginBtn">
+      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.3 13.1 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.6c-.5 2.9-2.2 5.4-4.6 7l7.4 5.7c4.3-4 6.8-9.9 6.8-17.2z"/><path fill="#FBBC05" d="M10.5 19.3a14.5 14.5 0 0 0 0 9.4l-7.9 6.1a24 24 0 0 1 0-21.6l7.9 6.1z"/><path fill="#34A853" d="M24 48c6.3 0 11.6-2.1 15.5-5.6l-7.4-5.7c-2.1 1.4-4.8 2.2-8.1 2.2-6.4 0-11.7-3.6-13.6-8.7l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      Tiếp tục với Google
+    </button>
+    <div class="auth-switch" id="switchHint"></div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="https://raw.githubusercontent.com/namdexVND/VNDhinhanh/refs/heads/main/1000048959.png" alt="VND">
+      <div class="brand-name">VND</div>
+    </div>
+    <button class="new-chat" id="newChatBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Đoạn chat mới
+    </button>
+    <div class="history-label">Lịch sử</div>
+    <div class="history" id="historyList"></div>
+    <div class="sidebar-foot">
+      <div class="foot-row">
+        <button class="foot-btn" id="loginOpenBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+          Đăng nhập / Đăng ký
+        </button>
+        <div class="account-box hidden" id="accountBox">
+          <div class="account-avatar" id="accountAvatar"></div>
+          <div class="account-info"><div class="name" id="accountName"></div><div class="email" id="accountEmail"></div></div>
+          <button class="account-logout" id="logoutBtn" title="Đăng xuất">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          </button>
+        </div>
+        <button class="icon-btn settings-gear-btn" id="settingsBtn" title="Cài đặt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="icon-btn" id="toggleSidebar" aria-label="Mở/đóng sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><line x1="9.5" y1="4" x2="9.5" y2="20"/></svg>
+      </button>
+      <div class="topbar-title">VND <b id="modelTag">· demo</b></div>
+    </div>
+
+    <div class="chat-scroll" id="chatScroll">
+      <div class="chat-inner" id="chatInner">
+        <div class="welcome" id="welcome">
+          <img src="https://raw.githubusercontent.com/namdexVND/VNDhinhanh/refs/heads/main/1000048959.png" alt="VND">
+          <h1>Xin chào, mình là <span>VND</span></h1>
+          <p>Trợ lý AI của bạn. Hỏi bất cứ điều gì, hoặc chọn một gợi ý bên dưới để bắt đầu.</p>
+          <div class="suggest-grid">
+            <button class="suggest-card" data-p="Viết ý tưởng nội dung cho kênh Vietnamese-language của tôi"><div class="t">Ý tưởng nội dung</div><div class="s">Gợi ý chủ đề cho kênh của bạn</div></button>
+            <button class="suggest-card" data-p="Giải thích một khái niệm khó bằng ví dụ đơn giản"><div class="t">Giải thích khái niệm</div><div class="s">Đơn giản hoá điều gì đó khó hiểu</div></button>
+            <button class="suggest-card" data-p="Sửa lỗi chính tả và ngữ pháp trong đoạn văn tôi gửi"><div class="t">Sửa văn bản</div><div class="s">Rà lỗi chính tả, ngữ pháp</div></button>
+            <button class="suggest-card" data-p="Gợi ý cách đặt tên cho một dự án web mới"><div class="t">Đặt tên dự án</div><div class="s">Brainstorm tên gọi hay</div></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-zone">
+      <div class="input-inner">
+        <div><div class="mode-chip hidden" id="modeChip">🎨 Chế độ tạo ảnh <span class="x" id="modeOff" title="Tắt">✕</span></div></div>
+        <div class="attach-chips" id="attachChips"></div>
+        <div class="input-box">
+          <div class="attach-wrap">
+            <button class="attach-btn" id="attachBtn" type="button" title="Đính kèm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <div class="attach-menu" id="attachMenu">
+              <button type="button" data-action="image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Chọn ảnh</button>
+              <button type="button" data-action="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Chọn tệp văn bản</button>
+              <button type="button" data-action="imagemode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span id="imgModeLabel">Tạo ảnh</span></button>
+              <button type="button" data-action="model"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>Chọn model</button>
+            </div>
+          </div>
+          <input type="file" id="imageInput" accept="image/*" multiple class="hidden">
+          <input type="file" id="fileInput" multiple class="hidden">
+          <textarea id="input" placeholder="Nhắn tin cho VND..." rows="1"></textarea>
+          <button class="send-btn" id="sendBtn" disabled aria-label="Gửi"></button>
+        </div>
+        <div class="input-hint">VND có thể mắc lỗi. Hãy kiểm tra lại thông tin quan trọng.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- XEM ẢNH LỚN -->
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""><button type="button" class="lb-close" id="lbClose" aria-label="Đóng">✕</button></div>
+
+<!-- SETTINGS -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head"><h2>Cài đặt</h2><button class="modal-close" id="closeSettingsBtn">✕</button></div>
+    <div class="settings-layout">
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="general">Chung</button>
+        <button class="settings-tab" data-tab="account">Tài khoản</button>
+        <button class="settings-tab" data-tab="api">Kết nối AI</button>
+        <button class="settings-tab" data-tab="plan">Nâng cấp gói</button>
+      </div>
+      <div class="settings-panels">
+        <div class="settings-panel active" data-panel="general">
+          <h3>Chung</h3>
+          <p class="sub">Tuỳ chỉnh trải nghiệm sử dụng VND.</p>
+          <div class="pref-row">
+            <div><div class="label">Ngôn ngữ trả lời</div><div class="hint">AI sẽ trả lời bằng ngôn ngữ này</div></div>
+            <select class="select-mini" id="prefLang"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+          </div>
+          <div class="pref-row">
+            <div><div class="label">Âm thanh khi AI trả lời xong</div><div class="hint">Phát tiếng "ting" nhẹ</div></div>
+            <div class="switch" id="prefSound"></div>
+          </div>
+          <div class="pref-row">
+            <div><div class="label">Xoá toàn bộ lịch sử chat</div><div class="hint">Không thể hoàn tác sau khi xoá</div></div>
+            <button class="btn" id="clearHistoryBtn">Xoá lịch sử</button>
+          </div>
+        </div>
+        <div class="settings-panel" data-panel="account">
+          <h3>Tài khoản</h3>
+          <p class="sub">Quản lý thông tin đăng nhập của bạn.</p>
+          <div id="settingsAccountSignedIn" class="hidden">
+            <div class="acc-tab-box">
+              <div class="acc-tab-avatar" id="settingsAccAvatar"></div>
+              <div class="acc-tab-info"><div class="name" id="settingsAccName"></div><div class="email" id="settingsAccEmail"></div><div class="plan-badge">Gói Free</div></div>
+            </div>
+            <div class="pref-row"><div class="label">Đăng xuất khỏi VND</div><button class="btn" id="settingsLogoutBtn">Đăng xuất</button></div>
+          </div>
+          <div id="settingsAccountSignedOut" class="signed-out-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <p>Bạn chưa đăng nhập. Đăng nhập để lưu thông tin tài khoản và nâng cấp gói.</p>
+            <button class="btn primary" id="settingsLoginBtn">Đăng nhập / Đăng ký</button>
+          </div>
+        </div>
+        <div class="settings-panel" data-panel="api">
+          <h3>Kết nối AI thật</h3>
+          <p class="sub">Mặc định VND chạy chế độ demo. Nhập endpoint tương thích OpenAI (chat/completions) — ví dụ server proxy Gemini của bạn: <code>https://ten-app.onrender.com/v1/chat/completions</code>.</p>
+          <div class="field"><label>API endpoint</label><input type="text" id="apiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" autocomplete="off"></div>
+          <div class="field">
+            <label>API key / Server access key</label>
+            <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
+            <div class="note">Key chỉ lưu trong trình duyệt này (localStorage) và chỉ gửi tới endpoint bạn nhập. Đừng dùng máy chung.</div>
+          </div>
+          <div class="field"><label>Model</label><input type="text" id="apiModel" placeholder="gemini-2.0-flash / gpt-4o-mini" autocomplete="off"></div>
+          <div class="field">
+            <label>Model tạo ảnh (tuỳ chọn)</label>
+            <input type="text" id="apiImageModel" placeholder="gemini-3.1-flash-image" autocomplete="off">
+            <div class="note">Để trống thì dùng model mặc định của server. Tạo ảnh gọi tới <code>/v1/images</code> cùng máy chủ với endpoint chat.</div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" id="testApi">Kiểm tra</button>
+            <button class="btn" id="clearSettings">Xoá kết nối</button>
+            <button class="btn primary" id="saveSettings">Lưu</button>
+          </div>
+        </div>
+        <div class="settings-panel" data-panel="plan">
+          <h3>Nâng cấp gói</h3>
+          <p class="sub">Chọn gói phù hợp để có thêm giới hạn tin nhắn, model mạnh hơn và tính năng ưu tiên.</p>
+          <div class="plan-grid">
+            <div class="plan-card"><div class="pname">Free</div><div class="pprice">0đ <span>/tháng</span></div><ul><li>Chat không giới hạn ở chế độ demo</li><li>Giới hạn tin nhắn AI thật mỗi ngày</li><li>Đính kèm ảnh &amp; tệp cơ bản</li></ul><button class="btn" disabled>Gói hiện tại</button></div>
+            <div class="plan-card featured"><div class="pbadge">Phổ biến nhất</div><div class="pname">Plus</div><div class="pprice">99.000đ <span>/tháng</span></div><ul><li>Tăng giới hạn tin nhắn hàng ngày</li><li>Ưu tiên tốc độ phản hồi</li><li>Truy cập model mới sớm hơn</li></ul><button class="btn primary plan-upgrade-btn" data-plan="Plus">Nâng cấp</button></div>
+            <div class="plan-card"><div class="pname">Pro</div><div class="pprice">249.000đ <span>/tháng</span></div><ul><li>Không giới hạn tin nhắn AI thật</li><li>Model cao cấp nhất</li><li>Hỗ trợ ưu tiên 24/7</li></ul><button class="btn plan-upgrade-btn" data-plan="Pro">Nâng cấp</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const chatScroll=$('chatScroll'), chatInner=$('chatInner'), welcome=$('welcome'), input=$('input'), sendBtn=$('sendBtn');
+const attachBtn=$('attachBtn'), attachMenu=$('attachMenu'), attachChips=$('attachChips');
+const imageInput=$('imageInput'), fileInput=$('fileInput'), historyList=$('historyList');
+const sidebar=$('sidebar'), sidebarBackdrop=$('sidebarBackdrop'), overlay=$('overlay'), modelTag=$('modelTag');
+
+const LOGO='https://raw.githubusercontent.com/namdexVND/VNDhinhanh/refs/heads/main/1000048959.png';
+const STORE_KEY='vnd_chats_v1', CFG_KEY='vnd_api_cfg_v1';
+const ICON_SEND='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+const ICON_STOP='<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+const ICON_COPY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+const ICON_REDO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>';
+
+const ICON_DL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>';
+
+// ---------- kho ảnh đã tạo (IndexedDB — tránh làm đầy localStorage) ----------
+const IDB_NAME='vnd_images', IDB_STORE='imgs';
+const imgUrlCache=new Map();
+let idbP=null;
+function idb(){
+  if(idbP) return idbP;
+  idbP=new Promise((res,rej)=>{
+    if(!window.indexedDB) return rej(new Error('Không có IndexedDB'));
+    const r=indexedDB.open(IDB_NAME,1);
+    r.onupgradeneeded=()=>r.result.createObjectStore(IDB_STORE);
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+  return idbP;
+}
+function idbRun(mode,fn){
+  return idb().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(IDB_STORE,mode), rq=fn(tx.objectStore(IDB_STORE));
+    tx.oncomplete=()=>res(rq&&rq.result);
+    tx.onerror=()=>rej(tx.error);
+    tx.onabort=()=>rej(tx.error);
+  }));
+}
+function b64ToBlob(b64,mime){
+  const bin=atob(b64), u=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+  return new Blob([u],{type:mime||'image/png'});
+}
+function saveImage(id,blob){
+  imgUrlCache.set(id,URL.createObjectURL(blob)); // luôn giữ trong RAM để xem ngay
+  return idbRun('readwrite',st=>st.put(blob,id)).catch(()=>{ toast('Không lưu được ảnh vào bộ nhớ trình duyệt — hãy tải ảnh về ngay.'); });
+}
+function getImageUrl(id){
+  if(imgUrlCache.has(id)) return Promise.resolve(imgUrlCache.get(id));
+  return idbRun('readonly',st=>st.get(id)).then(b=>{
+    if(!b) return null;
+    const u=URL.createObjectURL(b); imgUrlCache.set(id,u); return u;
+  }).catch(()=>null);
+}
+function deleteImages(ids){
+  ids=(ids||[]).filter(Boolean); if(!ids.length) return;
+  ids.forEach(id=>{const u=imgUrlCache.get(id); if(u){URL.revokeObjectURL(u); imgUrlCache.delete(id);}});
+  idbRun('readwrite',st=>{ids.forEach(id=>st.delete(id));}).catch(()=>{});
+}
+function clearAllImages(){
+  imgUrlCache.forEach(u=>URL.revokeObjectURL(u)); imgUrlCache.clear();
+  idbRun('readwrite',st=>st.clear()).catch(()=>{});
+}
+function chatImageIds(chat){return ((chat&&chat.messages)||[]).filter(m=>m.gen).map(m=>m.gen.id);}
+function downloadImage(g){
+  getImageUrl(g.id).then(url=>{
+    if(!url) return toast('Ảnh không còn trong bộ nhớ trình duyệt.');
+    const ext=((g.mime||'image/png').split('/')[1]||'png').split('+')[0].replace('jpeg','jpg');
+    const a=document.createElement('a'); a.href=url; a.download='vnd-anh-'+g.id+'.'+ext;
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+}
+function openLightbox(src){$('lightboxImg').src=src; $('lightbox').classList.add('open');}
+function closeLightbox(){$('lightbox').classList.remove('open'); $('lightboxImg').removeAttribute('src');}
+
+const isMobile=()=>window.innerWidth<=760;
+const coarse=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
+if(isMobile()) sidebar.classList.add('collapsed');
+
+// ---------- tiện ích ----------
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3200);
+}
+function beep(){
+  if(localStorage.getItem('vnd_pref_sound')!=='1') return;
+  try{
+    const ac=new (window.AudioContext||window.webkitAudioContext)(), o=ac.createOscillator(), g=ac.createGain();
+    o.connect(g); g.connect(ac.destination); o.frequency.value=660;
+    g.gain.setValueAtTime(.08,ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.18);
+    o.start(); o.stop(ac.currentTime+.2);
+  }catch(e){}
+}
+function copyText(text){
+  if(navigator.clipboard&&navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+  return new Promise((res,rej)=>{
+    try{const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); res();}catch(e){rej(e);}
+  });
+}
+
+// ---------- Markdown an toàn (escape trước, rồi mới dựng HTML) ----------
+function inlineMd(s){
+  s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,(m,t,u)=>'<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+t+'</a>');
+  s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,'$1<em>$2</em>');
+  s=s.replace(/~~([^~\n]+)~~/g,'<del>$1</del>');
+  return s;
+}
+function md(src){
+  const blocks=[], inl=[];
+  let s=escapeHtml(src);
+  s=s.replace(/```([\w+#.-]*)[ \t]*\n?([\s\S]*?)(```|$)/g,(m,lang,code)=>{blocks.push({lang,code:code.replace(/\n$/,'')});return '\n\u0000B'+(blocks.length-1)+'\u0000\n';});
+  s=s.replace(/`([^`\n]+)`/g,(m,c)=>{inl.push(c);return '\u0000I'+(inl.length-1)+'\u0000';});
+  const lines=s.split('\n'), out=[];
+  let i=0;
+  const isTableSep=l=>/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l||'');
+  const cells=l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+  while(i<lines.length){
+    const l=lines[i];
+    if(/^\s*$/.test(l)){i++;continue;}
+    let m;
+    if(/^\u0000B\d+\u0000$/.test(l.trim())){out.push(l.trim());i++;continue;}
+    if((m=/^(#{1,3})\s+(.*)$/.exec(l))){out.push('<h'+m[1].length+'>'+inlineMd(m[2])+'</h'+m[1].length+'>');i++;continue;}
+    if(/^\s*([-*_])\s*(\1\s*){2,}$/.test(l)){out.push('<hr>');i++;continue;}
+    if(l.trim().startsWith('|')&&isTableSep(lines[i+1])){
+      const head=cells(l); i+=2; const rows=[];
+      while(i<lines.length&&lines[i].trim().startsWith('|')){rows.push(cells(lines[i]));i++;}
+      out.push('<div class="tablewrap"><table><thead><tr>'+head.map(c=>'<th>'+inlineMd(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+inlineMd(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>');
+      continue;
+    }
+    if(/^\s*&gt;\s?/.test(l)){
+      const q=[]; while(i<lines.length&&/^\s*&gt;\s?/.test(lines[i])){q.push(lines[i].replace(/^\s*&gt;\s?/,''));i++;}
+      out.push('<blockquote>'+inlineMd(q.join('<br>'))+'</blockquote>');continue;
+    }
+    if(/^\s*([-*+])\s+/.test(l)){
+      const it=[]; while(i<lines.length&&/^\s*([-*+])\s+/.test(lines[i])){it.push(lines[i].replace(/^\s*[-*+]\s+/,''));i++;}
+      out.push('<ul>'+it.map(x=>'<li>'+inlineMd(x)+'</li>').join('')+'</ul>');continue;
+    }
+    if(/^\s*\d+[.)]\s+/.test(l)){
+      const it=[]; while(i<lines.length&&/^\s*\d+[.)]\s+/.test(lines[i])){it.push(lines[i].replace(/^\s*\d+[.)]\s+/,''));i++;}
+      out.push('<ol>'+it.map(x=>'<li>'+inlineMd(x)+'</li>').join('')+'</ol>');continue;
+    }
+    const p=[];
+    while(i<lines.length&&!/^\s*$/.test(lines[i])&&!/^(#{1,3}\s|\s*([-*+]|\d+[.)])\s+|\s*&gt;|\u0000B\d+\u0000$)/.test(lines[i])&&!(lines[i].trim().startsWith('|')&&isTableSep(lines[i+1]))){p.push(lines[i]);i++;}
+    if(!p.length){p.push(lines[i]);i++;}
+    out.push('<p>'+inlineMd(p.join('<br>'))+'</p>');
+  }
+  let html=out.join('');
+  html=html.replace(/\u0000I(\d+)\u0000/g,(m,n)=>'<code>'+inl[+n]+'</code>');
+  html=html.replace(/\u0000B(\d+)\u0000/g,(m,n)=>{
+    const b=blocks[+n];
+    return '<div class="codeblock"><div class="codehead"><span>'+(b.lang||'code')+'</span><button class="code-copy" type="button">Sao chép</button></div><pre><code>'+b.code+'</code></pre></div>';
+  });
+  return html;
+}
+
+// ---------- state & lưu trữ ----------
+let state=load(), activeId=state.activeId, attachments=[], busy=false, abortCtl=null, imageMode=false;
+function load(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(raw){const s=JSON.parse(raw); if(s&&typeof s.chats==='object') return {chats:s.chats||{},activeId:s.activeId||null};}
+  }catch(e){}
+  return {chats:{},activeId:null};
+}
+function persist(){
+  state.activeId=activeId;
+  // 'data' (ảnh gốc đã nén) chỉ giữ trong RAM — lưu thumbnail thôi để không đầy localStorage
+  const save=()=>localStorage.setItem(STORE_KEY,JSON.stringify(state,(k,v)=>k==='data'?undefined:v));
+  try{save();return;}catch(e){}
+  Object.values(state.chats).forEach(c=>{ if(c.id!==activeId) c.messages.forEach(m=>(m.atts||[]).forEach(a=>{delete a.thumb;})); });
+  try{save();toast('Bộ nhớ trình duyệt gần đầy: đã bỏ ảnh xem trước của các đoạn chat cũ.');}
+  catch(e){toast('Không lưu được lịch sử chat (bộ nhớ trình duyệt đã đầy). Hãy xoá bớt đoạn chat cũ.');}
+}
+function loadCfg(){try{const r=localStorage.getItem(CFG_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function applyCfgTag(){const c=loadCfg();modelTag.textContent=(c&&c.key&&c.endpoint)?('· '+(c.model||'kết nối API')):'· demo';}
+
+function startNewChat(render){
+  const cur=state.chats[activeId];
+  if(cur&&cur.messages.length===0){ if(render!==false){renderHistory();renderActiveChat();} return; }
+  const id=uid();
+  state.chats[id]={id,title:'Đoạn chat mới',messages:[],_t:Date.now()};
+  activeId=id; persist();
+  if(render!==false){renderHistory();renderActiveChat();}
+}
+if(!activeId||!state.chats[activeId]) startNewChat(false);
+
+// ---------- render ----------
+function renderHistory(){
+  historyList.innerHTML='';
+  const chats=Object.values(state.chats).filter(c=>c.messages.length>0||c.id===activeId).sort((a,b)=>(b._t||0)-(a._t||0));
+  if(!chats.length){historyList.innerHTML='<div class="history-empty">Chưa có đoạn chat nào</div>';return;}
+  chats.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='history-item'+(c.id===activeId?' active':'');
+    el.innerHTML='<span class="ttl"></span><svg class="del" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>';
+    el.querySelector('.ttl').textContent=c.title;
+    el.addEventListener('click',e=>{
+      if(busy) return toast('Đợi AI trả lời xong (hoặc bấm dừng) rồi hãy đổi đoạn chat.');
+      if(e.target.closest('.del')){
+        e.stopPropagation();
+        deleteImages(chatImageIds(state.chats[c.id]));
+        delete state.chats[c.id];
+        if(activeId===c.id){
+          const rest=Object.values(state.chats).sort((a,b)=>(b._t||0)-(a._t||0));
+          if(rest.length) activeId=rest[0].id; else {activeId=null; startNewChat(false);}
+        }
+        persist();renderHistory();renderActiveChat();return;
+      }
+      activeId=c.id;persist();renderHistory();renderActiveChat();
+      if(isMobile()) closeSidebar();
+    });
+    historyList.appendChild(el);
+  });
+}
+
+function renderActiveChat(){
+  const chat=state.chats[activeId];
+  chatInner.innerHTML='';
+  if(!chat.messages.length){chatInner.appendChild(welcome);return;}
+  const lastAi=(()=>{for(let i=chat.messages.length-1;i>=0;i--) if(chat.messages[i].role==='assistant') return i; return -1;})();
+  chat.messages.forEach((m,i)=>chatInner.appendChild(buildMsgEl(m,i===lastAi&&i===chat.messages.length-1)));
+  scrollToBottom(true);
+}
+
+function userInitial(){return (currentUser&&(currentUser.displayName||currentUser.email||'B').charAt(0).toUpperCase())||'B';}
+
+function buildMsgEl(m,withRegen){
+  const wrap=document.createElement('div'); wrap.className='msg '+m.role;
+  const avatar=document.createElement('div');
+  if(m.role==='assistant'){avatar.className='avatar bot';const im=document.createElement('img');im.src=LOGO;im.alt='';avatar.appendChild(im);}
+  else {avatar.className='avatar user';avatar.textContent=userInitial();}
+  const bw=document.createElement('div'); bw.className='bubble-wrap';
+  const b=document.createElement('div'); b.className='bubble'+(m.err?' err':'');
+  if(m.role==='assistant'){
+    if(m.gen){
+      b.appendChild(buildImageCard(m.gen));
+      if(m.content&&m.content.trim()){const n=document.createElement('div');n.className='imgnote';n.innerHTML=md(m.content);b.appendChild(n);}
+    }else b.innerHTML=md(m.content||'');
+  }else{
+    if(m.imgMode){const tg=document.createElement('div');tg.className='mode-tag';tg.textContent='🎨 Tạo ảnh';b.appendChild(tg);}
+    const imgs=(m.atts||[]).filter(a=>a.kind==='image'&&(a.thumb||a.data));
+    if(imgs.length){
+      const g=document.createElement('div'); g.className='att-grid';
+      imgs.forEach(a=>{const im=document.createElement('img');im.src=a.thumb||a.data;im.alt=a.name||'';g.appendChild(im);});
+      b.appendChild(g);
+    }
+    (m.atts||[]).filter(a=>a.kind==='file'||(a.kind==='image'&&!a.thumb&&!a.data)).forEach(a=>{
+      const c=document.createElement('div'); c.className='att-file'; c.textContent='📎 '+a.name; b.appendChild(c);
+    });
+    if(m.content){const t=document.createElement('div');t.textContent=m.content;b.appendChild(t);}
+  }
+  bw.appendChild(b);
+  if(m.role==='assistant'&&m.gen){
+    const act=document.createElement('div'); act.className='msg-actions';
+    act.innerHTML='<button type="button" data-act="download">'+ICON_DL+'Tải về</button>'+(withRegen?'<button type="button" data-act="regen">'+ICON_REDO+'Tạo lại</button>':'');
+    bw.appendChild(act);
+  }else if(m.role==='assistant'&&!m.err&&m.content){
+    const act=document.createElement('div'); act.className='msg-actions';
+    act.innerHTML='<button type="button" data-act="copy">'+ICON_COPY+'Sao chép</button>'+(withRegen?'<button type="button" data-act="regen">'+ICON_REDO+'Tạo lại</button>':'');
+    bw.appendChild(act);
+  }else if(m.role==='assistant'&&m.err&&withRegen){
+    const act=document.createElement('div'); act.className='msg-actions';
+    act.innerHTML='<button type="button" data-act="regen">'+ICON_REDO+'Thử lại</button>';
+    bw.appendChild(act);
+  }
+  wrap.appendChild(avatar); wrap.appendChild(bw);
+  return wrap;
+}
+
+function buildImageCard(g){
+  const card=document.createElement('div'); card.className='imgcard';
+  const holder=document.createElement('div'); holder.className='imgholder';
+  const show=url=>{
+    holder.innerHTML='';
+    if(!url){holder.innerHTML='<div class="img-missing">Ảnh không còn trong bộ nhớ trình duyệt (có thể do đã xoá dữ liệu trang). Bấm "Tạo lại" để tạo ảnh mới.</div>';return;}
+    const im=document.createElement('img'); im.className='genimg'; im.alt=g.prompt||'Ảnh do VND tạo';
+    im.onload=()=>{const me=im.closest('.msg'); if(me&&me===chatInner.lastElementChild) scrollToBottom(true);};
+    im.src=url; holder.appendChild(im);
+  };
+  const cached=imgUrlCache.get(g.id);
+  if(cached) show(cached);
+  else{
+    holder.innerHTML='<div class="img-skel"><div class="shimmer"></div></div>';
+    getImageUrl(g.id).then(show);
+  }
+  card.appendChild(holder);
+  return card;
+}
+
+function nearBottom(){return chatScroll.scrollHeight-chatScroll.scrollTop-chatScroll.clientHeight<140;}
+function scrollToBottom(force){requestAnimationFrame(()=>{ if(force||nearBottom()) chatScroll.scrollTop=chatScroll.scrollHeight; });}
+
+// ủy quyền sự kiện: sao chép code / sao chép tin / tạo lại
+chatInner.addEventListener('click',e=>{
+  const gi=e.target.closest('.genimg');
+  if(gi){openLightbox(gi.src);return;}
+  const cc=e.target.closest('.code-copy');
+  if(cc){
+    const code=cc.closest('.codeblock').querySelector('code').textContent;
+    copyText(code).then(()=>{cc.textContent='Đã chép ✓';setTimeout(()=>cc.textContent='Sao chép',1400);}).catch(()=>toast('Không sao chép được.'));
+    return;
+  }
+  const ab=e.target.closest('.msg-actions button');
+  if(!ab) return;
+  const chat=state.chats[activeId];
+  if(ab.dataset.act==='copy'){
+    const msg=ab.closest('.msg'), idx=Array.from(chatInner.querySelectorAll('.msg')).indexOf(msg);
+    const m=chat.messages[idx]; if(m) copyText(m.content).then(()=>toast('Đã sao chép.')).catch(()=>toast('Không sao chép được.'));
+  }else if(ab.dataset.act==='download'){
+    const msg=ab.closest('.msg'), idx=Array.from(chatInner.querySelectorAll('.msg')).indexOf(msg);
+    const m=chat.messages[idx]; if(m&&m.gen) downloadImage(m.gen);
+  }else if(ab.dataset.act==='regen'){
+    if(busy) return;
+    while(chat.messages.length&&chat.messages[chat.messages.length-1].role==='assistant'){
+      const x=chat.messages.pop(); if(x.gen) deleteImages([x.gen.id]);
+    }
+    if(!chat.messages.length) return;
+    persist();renderActiveChat();run(chat);
+  }
+});
+
+// ---------- nhập liệu ----------
+function setSendMode(){
+  sendBtn.innerHTML=busy?ICON_STOP:ICON_SEND;
+  sendBtn.setAttribute('aria-label',busy?'Dừng':'Gửi');
+  sendBtn.disabled=busy?false:(input.value.trim().length===0&&attachments.length===0);
+}
+setSendMode();
+input.addEventListener('input',()=>{
+  input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,180)+'px'; setSendMode();
+});
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&!coarse&&!e.isComposing){e.preventDefault();trySend();}
+});
+sendBtn.addEventListener('click',()=>{ if(busy){ if(abortCtl) abortCtl.abort(); } else trySend(); });
+document.querySelectorAll('.suggest-card').forEach(c=>c.addEventListener('click',()=>{input.value=c.dataset.p;input.dispatchEvent(new Event('input'));trySend();}));
+
+// ---------- đính kèm ----------
+attachBtn.addEventListener('click',e=>{
+  e.stopPropagation();
+  const open=!attachMenu.classList.contains('open');
+  attachMenu.classList.toggle('open',open); attachBtn.classList.toggle('open',open);
+});
+document.addEventListener('click',e=>{
+  if(!attachMenu.contains(e.target)&&!attachBtn.contains(e.target)){attachMenu.classList.remove('open');attachBtn.classList.remove('open');}
+});
+attachMenu.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+  attachMenu.classList.remove('open');attachBtn.classList.remove('open');
+  const a=btn.dataset.action;
+  if(a==='image') imageInput.click(); else if(a==='file') fileInput.click(); else if(a==='imagemode') setImageMode(!imageMode); else openSettingsModal('api');
+}));
+
+// chế độ tạo ảnh
+function setImageMode(on){
+  imageMode=!!on;
+  $('modeChip').classList.toggle('hidden',!imageMode);
+  $('imgModeLabel').textContent=imageMode?'Tắt chế độ tạo ảnh':'Tạo ảnh';
+  input.placeholder=imageMode?'Mô tả ảnh bạn muốn tạo… (đính kèm ảnh để chỉnh sửa)':'Nhắn tin cho VND...';
+  if(imageMode) input.focus();
+}
+$('modeOff').addEventListener('click',()=>setImageMode(false));
+$('lbClose').addEventListener('click',e=>{e.stopPropagation();closeLightbox();});
+$('lightbox').addEventListener('click',closeLightbox);
+imageInput.addEventListener('change',()=>handlePicked(imageInput.files,'image'));
+fileInput.addEventListener('change',()=>handlePicked(fileInput.files,'file'));
+
+// dán ảnh từ clipboard
+input.addEventListener('paste',e=>{
+  const files=Array.from((e.clipboardData&&e.clipboardData.files)||[]).filter(f=>f.type.startsWith('image/'));
+  if(files.length){e.preventDefault();handlePicked(files,'image');}
+});
+
+const TEXT_EXT=/\.(txt|md|markdown|json|csv|tsv|js|mjs|ts|jsx|tsx|html|htm|css|py|java|c|h|cpp|cs|go|rs|php|rb|xml|yml|yaml|log|sql|sh|ini|toml|srt|vtt)$/i;
+const MAX_ATT=6, MAX_TEXT=60000;
+
+function processImage(file){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{
+      const make=(max,q)=>{
+        const r=Math.min(1,max/Math.max(img.width,img.height));
+        const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*r)); c.height=Math.max(1,Math.round(img.height*r));
+        const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+        return c.toDataURL('image/jpeg',q);
+      };
+      const out={data:make(1280,.85),thumb:make(160,.7)};
+      URL.revokeObjectURL(url); resolve(out);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Không đọc được ảnh '+file.name));};
+    img.src=url;
+  });
+}
+function readText(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader(); r.onload=()=>resolve(String(r.result)); r.onerror=()=>reject(new Error('Không đọc được tệp '+file.name)); r.readAsText(file);
+  });
+}
+async function handlePicked(fileList,kind){
+  const files=Array.from(fileList||[]);
+  imageInput.value=''; fileInput.value='';
+  for(const file of files){
+    if(attachments.length>=MAX_ATT){toast('Tối đa '+MAX_ATT+' tệp đính kèm mỗi tin.');break;}
+    const item={id:uid(),name:file.name||'ảnh',kind,pending:true};
+    attachments.push(item); renderAttachChips();
+    try{
+      if(kind==='image'||file.type.startsWith('image/')){
+        item.kind='image'; Object.assign(item,await processImage(file));
+      }else if(file.type.startsWith('text/')||TEXT_EXT.test(file.name)||/json|xml/.test(file.type)){
+        let t=await readText(file);
+        if(t.length>MAX_TEXT){t=t.slice(0,MAX_TEXT)+'\n…[đã cắt bớt, tệp quá dài]';toast('Tệp '+file.name+' dài, chỉ gửi '+MAX_TEXT+' ký tự đầu.');}
+        item.kind='file'; item.text=t;
+      }else{
+        item.kind='file'; item.text=null; toast('Chưa đọc được nội dung "'+file.name+'" (chỉ hỗ trợ ảnh và tệp văn bản/code).');
+      }
+      item.pending=false;
+    }catch(err){
+      attachments=attachments.filter(a=>a!==item); toast(err.message);
+    }
+    renderAttachChips();
+  }
+  setSendMode();
+}
+function renderAttachChips(){
+  attachChips.innerHTML='';
+  attachments.forEach(item=>{
+    const chip=document.createElement('div'); chip.className='attach-chip';
+    if(item.kind==='image'&&item.thumb){const im=document.createElement('img');im.src=item.thumb;im.alt='';chip.appendChild(im);}
+    else chip.appendChild(document.createTextNode(item.pending?'⏳':'📎'));
+    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=item.name; chip.appendChild(nm);
+    const x=document.createElement('span'); x.className='x'; x.textContent='✕';
+    x.addEventListener('click',()=>{attachments=attachments.filter(a=>a.id!==item.id);renderAttachChips();setSendMode();});
+    chip.appendChild(x); attachChips.appendChild(chip);
+  });
+}
+
+// ---------- gửi & tạo phản hồi ----------
+function trySend(){
+  if(busy) return;
+  if(attachments.some(a=>a.pending)) return toast('Đang xử lý tệp đính kèm, đợi một chút…');
+  let text=input.value.trim(); const atts=attachments;
+  if(!text&&!atts.length) return;
+  // gõ "/ảnh mô tả" (hoặc /anh, /image, /img) cũng tạo ảnh, không cần bật chế độ
+  let imgMode=imageMode;
+  const norm=text.normalize('NFC');
+  if(/^\/(ảnh|anh|image|img)\s*$/i.test(norm)) return toast('Hãy nhập mô tả sau lệnh, ví dụ: /ảnh một chú mèo đội nón lá');
+  const sm=/^\/(ảnh|anh|image|img)\s+([\s\S]+)$/i.exec(norm);
+  if(sm){imgMode=true; text=sm[2].trim();}
+  if(imgMode&&!text) return toast('Hãy nhập mô tả cho ảnh cần tạo.');
+  const chat=state.chats[activeId];
+  if(!chat.messages.length){
+    chat.title=(text||(atts[0]&&atts[0].name)||'Đoạn chat mới').replace(/\s+/g,' ').slice(0,40);
+  }
+  chat._t=Date.now();
+  const um={role:'user',content:text,atts:atts.map(a=>({kind:a.kind,name:a.name,thumb:a.thumb,data:a.data,text:a.text}))};
+  if(imgMode) um.imgMode=true;
+  chat.messages.push(um);
+  persist();renderHistory();renderActiveChat();
+  input.value=''; input.style.height='auto'; attachments=[]; renderAttachChips();
+  run(chat);
+}
+// chọn đúng luồng: tạo ảnh hay chat văn bản (dựa vào tin nhắn người dùng cuối cùng)
+function run(chat){
+  const lastUser=[...chat.messages].reverse().find(m=>m.role==='user');
+  return (lastUser&&lastUser.imgMode)?generateImage(chat):generate(chat);
+}
+
+function systemPrompt(){
+  const lang=localStorage.getItem('vnd_pref_lang')||'vi';
+  return lang==='en'
+    ? 'You are VND, a friendly AI assistant. Reply in English unless asked otherwise. Use Markdown when helpful.'
+    : 'Bạn là VND, một trợ lý AI thân thiện. Trả lời bằng tiếng Việt trừ khi được yêu cầu khác. Dùng Markdown khi hữu ích.';
+}
+function toApiMessages(chat){
+  const out=[{role:'system',content:systemPrompt()}];
+  chat.messages.filter(m=>!m.err).slice(-40).forEach(m=>{
+    if(m.role==='assistant'&&m.gen){out.push({role:'assistant',content:'[Đã tạo một ảnh theo mô tả: '+(m.gen.prompt||'')+']'});return;}
+    if(m.role==='user'&&m.imgMode){out.push({role:'user',content:'[Yêu cầu tạo ảnh] '+(m.content||'')});return;}
+    if(m.role!=='user'||!(m.atts&&m.atts.length)){out.push({role:m.role,content:m.content||''});return;}
+    let text=m.content||''; const parts=[];
+    m.atts.forEach(a=>{
+      if(a.kind==='file') text+='\n\n[Tệp đính kèm: '+a.name+']\n'+(a.text!=null?a.text:'(không đọc được nội dung tệp này)');
+      else if(a.data) parts.push({type:'image_url',image_url:{url:a.data}});
+      else text+='\n[Đã gửi ảnh: '+a.name+' — ảnh cũ không còn trong bộ nhớ]';
+    });
+    if(!text.trim()&&parts.length) text='Hãy mô tả và phân tích ảnh này.';
+    out.push({role:'user',content:parts.length?[{type:'text',text},...parts]:text});
+  });
+  return out;
+}
+
+async function readSSE(body,onDelta){
+  const reader=body.getReader(), dec=new TextDecoder(); let buf='';
+  while(true){
+    const {done,value}=await reader.read(); if(done) return;
+    buf+=dec.decode(value,{stream:true});
+    let i;
+    while((i=buf.indexOf('\n'))>=0){
+      const line=buf.slice(0,i).trim(); buf=buf.slice(i+1);
+      if(!line.startsWith('data:')) continue;
+      const data=line.slice(5).trim(); if(data==='[DONE]') return;
+      let j=null; try{j=JSON.parse(data);}catch(e){continue;}
+      if(j.error) throw new Error(j.error.message||'Lỗi từ máy chủ');
+      const d=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;
+      if(d) onDelta(d);
+    }
+  }
+}
+function extractReply(d){
+  return (d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)
+    ||(d&&d.content&&d.content[0]&&d.content[0].text)||'';
+}
+const sleep=(ms,sig)=>new Promise((res,rej)=>{
+  const t=setTimeout(res,ms);
+  if(sig) sig.addEventListener('abort',()=>{clearTimeout(t);rej(Object.assign(new Error('abort'),{name:'AbortError'}));},{once:true});
+});
+
+function demoReply(chat){
+  const last=[...chat.messages].reverse().find(m=>m.role==='user')||{};
+  const text=(last.content||'').trim(), atts=last.atts||[];
+  if(!text&&atts.length) return 'Mình đã nhận được '+atts.length+' tệp/ảnh bạn gửi.\n\nVND đang ở **chế độ demo** nên chưa phân tích được nội dung. Vào **Cài đặt → Kết nối AI** để nối với một API thật.';
+  const t=text.toLowerCase();
+  if(/^(chào|hi|hello|xin chào)/.test(t)) return 'Chào bạn! Mình là VND — đang ở **chế độ demo** (chưa kết nối API thật). Bạn muốn hỏi gì nào?';
+  if(t.includes('bạn là ai')||t.includes('vnd là gì')) return 'Mình là **VND**, một trợ lý AI. Đây là bản demo giao diện — hãy vào **Cài đặt → Kết nối AI** và nhập endpoint + key để mình trả lời thông minh hơn.';
+  return 'Mình đã nhận được: “'+text+'”.\n\nVND đang chạy **chế độ demo** nên chỉ phản hồi mẫu. Mở **Cài đặt → Kết nối AI** để nhập API endpoint và key.';
+}
+
+async function generate(chat){
+  busy=true; setSendMode();
+  abortCtl=new AbortController();
+  const sig=abortCtl.signal;
+
+  const typing=document.createElement('div'); typing.className='msg assistant';
+  typing.innerHTML='<div class="avatar bot"><img src="'+LOGO+'" alt=""></div><div class="bubble-wrap"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>';
+  chatInner.appendChild(typing); scrollToBottom(true);
+
+  let acc='', wrapEl=null, bubbleEl=null, pending=false, errMsg='';
+  const ensure=()=>{
+    if(wrapEl) return;
+    typing.remove(); wrapEl=buildMsgEl({role:'assistant',content:''},false); bubbleEl=wrapEl.querySelector('.bubble');
+    chatInner.appendChild(wrapEl);
+  };
+  const paint=()=>{
+    if(pending) return; pending=true;
+    requestAnimationFrame(()=>{pending=false; if(bubbleEl){bubbleEl.innerHTML=md(acc);scrollToBottom();}});
+  };
+
+  try{
+    const cfg=loadCfg();
+    if(cfg&&cfg.key&&cfg.endpoint){
+      const res=await fetch(cfg.endpoint,{
+        method:'POST', signal:sig,
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+        body:JSON.stringify({model:cfg.model||'gpt-4o-mini',stream:true,messages:toApiMessages(chat)})
+      });
+      if(!res.ok){
+        let msg='Lỗi HTTP '+res.status;
+        try{const d=await res.json(); msg=(d.error&&(d.error.message||d.error))||msg;}catch(e){}
+        if(res.status===401) msg='Sai API key hoặc access key. ('+msg+')';
+        throw new Error(msg);
+      }
+      const ct=res.headers.get('content-type')||'';
+      if(ct.includes('text/event-stream')&&res.body){
+        ensure(); await readSSE(res.body,d=>{acc+=d;paint();});
+      }else{
+        const d=await res.json(); acc=extractReply(d); ensure(); paint();
+      }
+      if(!acc.trim()) throw new Error('API không trả về nội dung.');
+    }else{
+      await sleep(550+Math.random()*450,sig);
+      const full=demoReply(chat); ensure();
+      const words=full.split(/(\s+)/);
+      for(const w of words){acc+=w;paint();await sleep(14,sig);}
+    }
+  }catch(err){
+    if(err.name!=='AbortError'){
+      errMsg=(err instanceof TypeError)?'Không kết nối được tới máy chủ. Kiểm tra endpoint, mạng hoặc CORS trong Cài đặt → Kết nối AI.':err.message;
+    }
+  }
+
+  typing.remove();
+  if(wrapEl) wrapEl.remove();
+  if(errMsg){
+    if(acc.trim()) chat.messages.push({role:'assistant',content:acc});
+    chat.messages.push({role:'assistant',content:'⚠️ '+errMsg,err:true});
+  }else if(acc.trim()){
+    chat.messages.push({role:'assistant',content:acc});
+    beep();
+  }
+  busy=false; abortCtl=null; setSendMode();
+  chat._t=Date.now(); persist();
+  if(state.chats[activeId]===chat){renderHistory();renderActiveChat();}
+}
+
+// ---------- tạo ảnh ----------
+function imageEndpoint(ep){
+  try{
+    const u=new URL(ep);
+    if(/\/chat\/completions\/?$/.test(u.pathname)) u.pathname=u.pathname.replace(/\/chat\/completions\/?$/,'/images');
+    else u.pathname='/v1/images';
+    return u.toString();
+  }catch(e){return ep;}
+}
+
+// Khi fetch bị đứt hẳn: xác định chính xác nguyên nhân thay vì báo chung chung
+async function diagnoseNetwork(endpoint,imgUrl){
+  let u; try{u=new URL(endpoint);}catch(e){return 'Endpoint không hợp lệ: '+endpoint;}
+  if(location.protocol==='https:'&&u.protocol==='http:') return 'Trang đang chạy HTTPS nhưng endpoint là HTTP ('+endpoint+') nên trình duyệt chặn. Hãy đổi endpoint sang https://.';
+  if(/^(localhost|127\.|0\.0\.0\.0)/.test(u.hostname)&&location.protocol!=='file:'&&!/^(localhost|127\.)/.test(location.hostname)) return 'Endpoint đang trỏ tới localhost ('+u.hostname+'), nhưng trang này không chạy trên cùng máy với server. Hãy dùng địa chỉ công khai (https://ten-app.onrender.com/...).';
+  const origin=u.origin;
+  let healthOk=false, health=null;
+  try{
+    const r=await fetch(origin+'/health',{cache:'no-store'});
+    healthOk=r.ok; if(r.ok) health=await r.json().catch(()=>null);
+  }catch(e){}
+  if(!healthOk) return 'Không truy cập được máy chủ '+origin+' (kể cả /health). Máy chủ đang tắt, đang ngủ (Render gói free cần ~1 phút để bật lại) hoặc URL bị sai. Mở '+origin+'/health trên trình duyệt để kiểm tra, thấy "ok": true rồi thử lại.';
+  if(health&&health.activeKeys===0) return 'Máy chủ chạy nhưng chưa có API key Gemini nào đang bật. Vào '+origin+'/admin.html để thêm key.';
+  return 'Máy chủ '+origin+' đang chạy nhưng kết nối tạo ảnh bị cắt giữa chừng. Nguyên nhân thường là máy chủ chưa deploy bản server.js mới (có /v1/images và giữ kết nối) hoặc proxy ngắt yêu cầu quá lâu. Hãy deploy lại server.js rồi thử lại.';
+}
+
+async function generateImage(chat){
+  busy=true; setSendMode();
+  abortCtl=new AbortController();
+  const sig=abortCtl.signal;
+  const lastUser=[...chat.messages].reverse().find(m=>m.role==='user')||{};
+  const prompt=(lastUser.content||'').trim();
+  const refs=(lastUser.atts||[]).filter(a=>a.kind==='image'&&a.data).map(a=>a.data);
+
+  // khung "đang tạo ảnh…"
+  const ph=document.createElement('div'); ph.className='msg assistant';
+  ph.innerHTML='<div class="avatar bot"><img src="'+LOGO+'" alt=""></div><div class="bubble-wrap"><div class="bubble"><div class="imggen"><div class="imggen-box"><div class="shimmer"></div></div><div class="imggen-label"><span class="spin"></span><span class="lbl">Đang tạo ảnh…</span></div></div></div></div>';
+  chatInner.appendChild(ph); scrollToBottom(true);
+  const lbl=ph.querySelector('.lbl'), t0=Date.now();
+  const tick=setInterval(()=>{lbl.textContent='Đang tạo ảnh… '+Math.floor((Date.now()-t0)/1000)+'s';},1000);
+
+  let errMsg='', result=null;
+  try{
+    const cfg=loadCfg();
+    if(!(cfg&&cfg.key&&cfg.endpoint)) throw new Error('Tạo ảnh cần kết nối API thật. Vào Cài đặt → Kết nối AI để nhập endpoint và key.');
+    const url=imageEndpoint(cfg.endpoint);
+    const reqInit={
+      method:'POST', signal:sig,
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+      body:JSON.stringify({prompt,model:cfg.imageModel||undefined,images:refs})
+    };
+    let res=null, netErr=null;
+    for(let attempt=0;attempt<3;attempt++){           // server miễn phí (Render) có thể đang ngủ -> thử lại
+      try{ res=await fetch(url,reqInit); netErr=null; break; }
+      catch(e){
+        if(e.name==='AbortError') throw e;
+        netErr=e;
+        if(attempt<2){ lbl.textContent='Đang đánh thức máy chủ, thử lại… ('+(attempt+2)+'/3)'; await new Promise(r=>setTimeout(r,4000)); }
+      }
+    }
+    if(netErr) throw new Error(await diagnoseNetwork(cfg.endpoint,url));
+    if(!res.ok){
+      let msg='Lỗi HTTP '+res.status;
+      try{const d=await res.json(); msg=(d.error&&(d.error.message||d.error))||msg;}catch(e){}
+      if(res.status===401) msg='Sai API key hoặc access key. ('+msg+')';
+      if(res.status===404) msg='Máy chủ chưa có route tạo ảnh (/v1/images). Hãy deploy lại server.js bản mới. ('+msg+')';
+      throw new Error(msg);
+    }
+    const raw=await res.text(); let d;
+    try{ d=JSON.parse(raw); }catch(e){ throw new Error('Máy chủ trả về dữ liệu không hợp lệ (có thể bị proxy cắt giữa chừng): '+raw.slice(0,120)); }
+    if(d&&d.error) throw new Error(d.error.message||String(d.error));
+    const img=d&&d.data&&d.data[0];
+    if(!img||!img.b64_json) throw new Error((d&&d.text)||'Gemini không trả về ảnh. Hãy thử mô tả khác.');
+    const mime=img.mime_type||'image/png', id=uid();
+    await saveImage(id,b64ToBlob(img.b64_json,mime));
+    result={role:'assistant',content:d.text||'',gen:{id,prompt,mime}};
+  }catch(err){
+    if(err.name!=='AbortError'){
+      errMsg=(err instanceof TypeError)?'Không kết nối được tới máy chủ. Kiểm tra endpoint, mạng hoặc CORS trong Cài đặt → Kết nối AI.':err.message;
+    }
+  }
+
+  clearInterval(tick);
+  ph.remove();
+  if(errMsg) chat.messages.push({role:'assistant',content:'⚠️ '+errMsg,err:true});
+  else if(result){chat.messages.push(result); beep();}
+  busy=false; abortCtl=null; setSendMode();
+  chat._t=Date.now(); persist();
+  if(state.chats[activeId]===chat){renderHistory();renderActiveChat();}
+}
+
+// ---------- sidebar & cài đặt ----------
+$('newChatBtn').addEventListener('click',()=>{ if(busy) return toast('Đợi AI trả lời xong (hoặc bấm dừng).'); startNewChat(); if(isMobile()) closeSidebar(); });
+function openSidebar(){sidebar.classList.remove('collapsed');if(isMobile()) sidebarBackdrop.classList.add('open');}
+function closeSidebar(){sidebar.classList.add('collapsed');sidebarBackdrop.classList.remove('open');}
+$('toggleSidebar').addEventListener('click',()=>sidebar.classList.contains('collapsed')?openSidebar():closeSidebar());
+sidebarBackdrop.addEventListener('click',closeSidebar);
+
+function openSettingsModal(tab){
+  const cfg=loadCfg()||{};
+  $('apiEndpoint').value=cfg.endpoint||''; $('apiKey').value=cfg.key||''; $('apiModel').value=cfg.model||''; $('apiImageModel').value=cfg.imageModel||'';
+  $('prefLang').value=localStorage.getItem('vnd_pref_lang')||'vi';
+  renderSettingsAccountTab(); switchSettingsTab(tab||'general'); overlay.classList.add('open');
+}
+function switchSettingsTab(tab){
+  document.querySelectorAll('.settings-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.settings-panel').forEach(p=>p.classList.toggle('active',p.dataset.panel===tab));
+}
+document.querySelectorAll('.settings-tab').forEach(b=>b.addEventListener('click',()=>switchSettingsTab(b.dataset.tab)));
+$('settingsBtn').addEventListener('click',()=>openSettingsModal('general'));
+$('closeSettingsBtn').addEventListener('click',()=>overlay.classList.remove('open'));
+overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.classList.remove('open');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){overlay.classList.remove('open');$('authScreen').classList.add('hidden');closeLightbox();}});
+
+function readCfgForm(){
+  return {endpoint:$('apiEndpoint').value.trim(),key:$('apiKey').value.trim(),model:$('apiModel').value.trim(),imageModel:$('apiImageModel').value.trim()};
+}
+$('saveSettings').addEventListener('click',()=>{
+  const cfg=readCfgForm();
+  if(cfg.endpoint&&!/^https?:\/\//i.test(cfg.endpoint)) return toast('Endpoint phải bắt đầu bằng http:// hoặc https://');
+  try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}catch(e){return toast('Không lưu được cài đặt.');}
+  applyCfgTag(); overlay.classList.remove('open'); toast('Đã lưu kết nối.');
+});
+$('clearSettings').addEventListener('click',()=>{
+  localStorage.removeItem(CFG_KEY);
+  ['apiEndpoint','apiKey','apiModel','apiImageModel'].forEach(i=>$(i).value='');
+  applyCfgTag(); toast('Đã xoá kết nối.');
+});
+$('testApi').addEventListener('click',async()=>{
+  const cfg=readCfgForm(); const btn=$('testApi');
+  if(!cfg.endpoint||!cfg.key) return toast('Nhập endpoint và key trước.');
+  btn.disabled=true; btn.textContent='Đang thử…';
+  try{
+    const res=await fetch(cfg.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+      body:JSON.stringify({model:cfg.model||'gpt-4o-mini',messages:[{role:'user',content:'Trả lời đúng một từ: ok'}]})});
+    const d=await res.json().catch(()=>null);
+    if(res.ok&&extractReply(d)) toast('Kết nối OK ✓');
+    else toast('Lỗi: '+((d&&d.error&&(d.error.message||d.error))||('HTTP '+res.status)));
+  }catch(e){toast('Không kết nối được (sai URL, mạng hoặc CORS).');}
+  btn.disabled=false; btn.textContent='Kiểm tra';
+});
+
+const prefSound=$('prefSound');
+prefSound.classList.toggle('on',localStorage.getItem('vnd_pref_sound')==='1');
+prefSound.addEventListener('click',()=>{const on=!prefSound.classList.contains('on');prefSound.classList.toggle('on',on);localStorage.setItem('vnd_pref_sound',on?'1':'0');if(on) beep();});
+$('prefLang').addEventListener('change',e=>localStorage.setItem('vnd_pref_lang',e.target.value));
+$('clearHistoryBtn').addEventListener('click',()=>{
+  if(busy) return toast('Đợi AI trả lời xong (hoặc bấm dừng).');
+  if(!confirm('Xoá toàn bộ lịch sử chat? Hành động này không thể hoàn tác.')) return;
+  clearAllImages(); state.chats={}; activeId=null; startNewChat(false); persist(); renderHistory(); renderActiveChat(); overlay.classList.remove('open');
+});
+document.querySelectorAll('.plan-upgrade-btn').forEach(b=>b.addEventListener('click',()=>alert('Gói '+b.dataset.plan+' hiện chưa mở thanh toán. Tính năng đang được phát triển.')));
+
+// ---------- AUTH ----------
+const authScreen=$('authScreen'), loginForm=$('loginForm'), registerForm=$('registerForm'), authError=$('authError'), switchHint=$('switchHint');
+const accountBox=$('accountBox'), loginOpenBtn=$('loginOpenBtn');
+let currentUser=null;
+const showAuthError=m=>{authError.textContent=m;authError.classList.add('show');};
+const hideAuthError=()=>{authError.classList.remove('show');authError.textContent='';};
+function setBusy(form,busy){
+  const b=form.querySelector('button[type=submit]'); if(!b) return;
+  if(busy){b.dataset.label=b.dataset.label||b.textContent;b.textContent='Đang xử lý...';b.disabled=true;}
+  else{b.textContent=b.dataset.label||b.textContent;b.disabled=false;}
+}
+function switchAuthTab(tab){
+  hideAuthError();
+  const login=tab==='login';
+  $('tabLogin').classList.toggle('active',login); $('tabRegister').classList.toggle('active',!login);
+  loginForm.classList.toggle('hidden',!login); registerForm.classList.toggle('hidden',login);
+  switchHint.innerHTML=login?'Chưa có tài khoản? <a>Đăng ký ngay</a>':'Đã có tài khoản? <a>Đăng nhập</a>';
+  switchHint.querySelector('a').addEventListener('click',()=>switchAuthTab(login?'register':'login'));
+}
+$('tabLogin').addEventListener('click',()=>switchAuthTab('login'));
+$('tabRegister').addEventListener('click',()=>switchAuthTab('register'));
+switchAuthTab('login');
+
+function withAuth(fn){
+  if(window.vndAuth) return Promise.resolve(fn(window.vndAuth));
+  return new Promise(res=>window.addEventListener('vndAuthReady',()=>res(fn(window.vndAuth)),{once:true}));
+}
+const emailValid=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+loginForm.addEventListener('submit',e=>{
+  e.preventDefault(); hideAuthError();
+  const email=$('loginEmail').value.trim().toLowerCase(), pass=$('loginPassword').value;
+  if(!email||!pass) return showAuthError('Nhập đầy đủ email và mật khẩu.');
+  setBusy(loginForm,true);
+  withAuth(a=>a.login(email,pass)).then(enterApp).catch(err=>showAuthError(err.message)).finally(()=>setBusy(loginForm,false));
+});
+registerForm.addEventListener('submit',e=>{
+  e.preventDefault(); hideAuthError();
+  const name=$('regName').value.trim(), email=$('regEmail').value.trim().toLowerCase(), p1=$('regPassword').value, p2=$('regPassword2').value;
+  if(!name||!email||!p1) return showAuthError('Vui lòng điền đầy đủ thông tin.');
+  if(!emailValid(email)) return showAuthError('Email không hợp lệ.');
+  if(p1.length<6) return showAuthError('Mật khẩu cần tối thiểu 6 ký tự.');
+  if(p1!==p2) return showAuthError('Mật khẩu nhập lại không khớp.');
+  setBusy(registerForm,true);
+  withAuth(a=>a.register(name,email,p1)).then(enterApp).catch(err=>showAuthError(err.message)).finally(()=>setBusy(registerForm,false));
+});
+$('googleLoginBtn').addEventListener('click',()=>{
+  hideAuthError(); const b=$('googleLoginBtn'); b.disabled=true;
+  withAuth(a=>a.loginGoogle()).then(enterApp).catch(err=>showAuthError(err.message)).finally(()=>b.disabled=false);
+});
+
+function setAvatar(el,user,name){
+  el.textContent='';
+  if(user.photoURL){const im=document.createElement('img');im.src=user.photoURL;im.alt='';im.referrerPolicy='no-referrer';el.appendChild(im);}
+  else el.textContent=name.charAt(0).toUpperCase();
+}
+function displayName(u){return u.displayName||(u.email?u.email.split('@')[0]:'Người dùng');}
+function enterApp(user){
+  if(!user) return;
+  currentUser=user; const name=displayName(user);
+  $('accountName').textContent=name; $('accountEmail').textContent=user.email||'';
+  setAvatar($('accountAvatar'),user,name);
+  accountBox.classList.remove('hidden'); loginOpenBtn.classList.add('hidden'); authScreen.classList.add('hidden');
+  renderSettingsAccountTab(); renderActiveChat();
+}
+function exitApp(){
+  currentUser=null; accountBox.classList.add('hidden'); loginOpenBtn.classList.remove('hidden');
+  renderSettingsAccountTab(); renderActiveChat();
+}
+function renderSettingsAccountTab(){
+  const inn=$('settingsAccountSignedIn'), out=$('settingsAccountSignedOut');
+  if(currentUser){
+    const name=displayName(currentUser);
+    setAvatar($('settingsAccAvatar'),currentUser,name);
+    $('settingsAccName').textContent=name; $('settingsAccEmail').textContent=currentUser.email||'';
+    inn.classList.remove('hidden'); out.classList.add('hidden');
+  }else{inn.classList.add('hidden'); out.classList.remove('hidden');}
+}
+loginOpenBtn.addEventListener('click',()=>{hideAuthError();authScreen.classList.remove('hidden');});
+$('authCloseBtn').addEventListener('click',()=>authScreen.classList.add('hidden'));
+authScreen.addEventListener('click',e=>{if(e.target===authScreen) authScreen.classList.add('hidden');});
+$('logoutBtn').addEventListener('click',()=>{
+  withAuth(a=>a.logout()).then(()=>{exitApp();switchAuthTab('login');loginForm.reset();registerForm.reset();}).catch(console.error);
+});
+$('settingsLoginBtn').addEventListener('click',()=>{overlay.classList.remove('open');loginOpenBtn.click();});
+$('settingsLogoutBtn').addEventListener('click',()=>{overlay.classList.remove('open');$('logoutBtn').click();});
+withAuth(a=>a.onChange(u=>{u?enterApp(u):exitApp();}));
+
+// ---------- khởi động ----------
+renderHistory(); renderActiveChat(); applyCfgTag(); renderAttachChips();
+})();
+</script>
+</body>
+</html>
