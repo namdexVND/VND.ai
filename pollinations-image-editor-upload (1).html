@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chỉnh sửa ảnh bằng Pollinations (tải ảnh trực tiếp)</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --surface:#ffffff; --text:#1a1a1f; --muted:#6b7280;
+    --border:#e2e4e9; --accent:#0891b2; --accent-text:#ffffff;
+    --danger:#dc2626; --radius:14px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#121214; --surface:#1c1c20; --text:#f1f1f3; --muted:#9a9aa2;
+      --border:#2e2e33; --accent:#22d3ee; --accent-text:#121214;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#121214; --surface:#1c1c20; --text:#f1f1f3; --muted:#9a9aa2;
+    --border:#2e2e33; --accent:#22d3ee; --accent-text:#121214;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px;}
+  h1{font-size:1.25rem;margin:4px 0 2px;}
+  p.sub{color:var(--muted);font-size:.9rem;margin:0 0 20px;}
+  .card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px; margin-bottom:14px;
+  }
+  label{display:block;font-size:.85rem;font-weight:600;margin-bottom:6px;}
+  input[type=password], input[type=text], select{
+    width:100%; background:var(--bg); color:var(--text);
+    border:1px solid var(--border); border-radius:10px; padding:10px 12px;
+    font-size:.95rem; font-family:inherit;
+  }
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:6px;}
+  button{
+    appearance:none; border:none; border-radius:10px; padding:11px 18px;
+    font-size:.95rem; font-weight:600; cursor:pointer;
+  }
+  .btn-primary{background:var(--accent); color:var(--accent-text);}
+  .btn-primary:disabled{opacity:.5; cursor:not-allowed;}
+  .btn-secondary{background:transparent; color:var(--text); border:1px solid var(--border);}
+  #dropzone{
+    border:2px dashed var(--border); border-radius:12px; padding:18px;
+    text-align:center; color:var(--muted); cursor:pointer; font-size:.9rem;
+  }
+  #dropzone.drag{border-color:var(--accent); color:var(--accent);}
+  .preview-grid{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;}
+  .preview-box{flex:1; min-width:140px;}
+  .preview-box img{width:100%; border-radius:10px; border:1px solid var(--border); display:block;}
+  .preview-box .label{font-size:.78rem; color:var(--muted); margin-bottom:6px;}
+  #status{font-size:.85rem; margin-top:10px; min-height:1.2em;}
+  #status.error{color:var(--danger);}
+  .spinner{
+    width:16px;height:16px;border:2px solid var(--border);
+    border-top-color:var(--accent); border-radius:50%;
+    display:inline-block; vertical-align:-3px; margin-right:6px;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .field{margin-bottom:12px;}
+  .field:last-child{margin-bottom:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🖌️ Chỉnh sửa ảnh bằng Pollinations</h1>
+  <p class="sub">Tải ảnh trực tiếp từ máy, chọn chỉnh sửa, ảnh mới sẽ được tạo qua Pollinations.ai.</p>
+
+  <div class="card">
+    <label for="apiKey">Pollinations API Key</label>
+    <input type="password" id="apiKey" placeholder="sk_...">
+    <div class="hint">Key chỉ lưu trong trình duyệt của bạn (localStorage). Lấy/đổi key tại enter.pollinations.ai.</div>
+  </div>
+
+  <div class="card">
+    <label>Ảnh gốc</label>
+    <div id="dropzone">📷 Nhấn để chọn ảnh, hoặc kéo-thả ảnh vào đây</div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+    <div class="preview-grid" id="previewGrid" style="display:none;">
+      <div class="preview-box">
+        <div class="label">Ảnh gốc</div>
+        <img id="srcPreview">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <label for="modelSelect">Model chỉnh sửa</label>
+    <select id="modelSelect">
+      <option value="kontext">kontext (khuyến nghị)</option>
+      <option value="nanobanana">nanobanana</option>
+      <option value="seedream">seedream</option>
+      <option value="gptimage">gptimage</option>
+      <option value="klein">klein</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label for="hairInput">Kiểu tóc</label>
+      <input type="text" id="hairInput" placeholder="Ví dụ: Tóc ngắn undercut nhuộm xanh lá">
+    </div>
+    <div class="field">
+      <label for="outfitInput">Trang phục</label>
+      <input type="text" id="outfitInput" placeholder="Ví dụ: Áo hoodie streetwear đen kết hợp quần jogger">
+    </div>
+    <div class="field">
+      <label for="colorInput">Tông màu chủ đạo</label>
+      <input type="text" id="colorInput" placeholder="Ví dụ: Xanh dương - Đen">
+    </div>
+  </div>
+
+  <div class="row">
+    <button class="btn-primary" id="sendBtn" disabled>Gửi & Tạo ảnh mới</button>
+    <button class="btn-secondary" id="clearBtn">Xoá ảnh</button>
+  </div>
+  <div id="status"></div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <label>Kết quả</label>
+    <div class="preview-grid">
+      <div class="preview-box">
+        <div class="label">Ảnh mới</div>
+        <img id="resultImg">
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <a id="downloadLink" download="ket-qua.png"><button class="btn-secondary" type="button">⬇️ Tải ảnh về</button></a>
+    </div>
+  </div>
+
+  <details>
+    <summary class="hint">Ghi chú kỹ thuật</summary>
+    <p class="hint">
+      Trang này gửi ảnh trực tiếp tới endpoint OpenAI-compatible <code>gen.pollinations.ai/v1/images/edits</code> (multipart/form-data), không cần ảnh phải có sẵn link công khai.
+      Nếu tài khoản/model bạn dùng chưa hỗ trợ endpoint này, trang sẽ báo lỗi rõ ràng — khi đó bạn có thể dùng bản "dán link ảnh" thay thế.
+    </p>
+  </details>
+</div>
+
+<script>
+(function(){
+  const apiKeyInput = document.getElementById('apiKey');
+  const fileInput = document.getElementById('fileInput');
+  const dropzone = document.getElementById('dropzone');
+  const previewGrid = document.getElementById('previewGrid');
+  const srcPreview = document.getElementById('srcPreview');
+  const modelSelect = document.getElementById('modelSelect');
+  const hairInput = document.getElementById('hairInput');
+  const outfitInput = document.getElementById('outfitInput');
+  const colorInput = document.getElementById('colorInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const statusEl = document.getElementById('status');
+  const resultCard = document.getElementById('resultCard');
+  const resultImg = document.getElementById('resultImg');
+  const downloadLink = document.getElementById('downloadLink');
+
+  let imageFile = null;
+
+  try {
+    const saved = localStorage.getItem('pollinations_api_key');
+    if (saved) apiKeyInput.value = saved;
+  } catch(e) {}
+  apiKeyInput.addEventListener('input', () => {
+    try { localStorage.setItem('pollinations_api_key', apiKeyInput.value.trim()); } catch(e) {}
+    updateSendState();
+  });
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file){
+    if (!file.type.startsWith('image/')) {
+      setStatus('Vui lòng chọn một tệp ảnh.', true);
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setStatus('Ảnh quá lớn (tối đa 15MB). Hãy chọn ảnh nhỏ hơn.', true);
+      return;
+    }
+    imageFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      srcPreview.src = reader.result;
+      previewGrid.style.display = 'flex';
+      resultCard.style.display = 'none';
+      setStatus('');
+      updateSendState();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearBtn.addEventListener('click', () => {
+    imageFile = null;
+    fileInput.value = '';
+    previewGrid.style.display = 'none';
+    resultCard.style.display = 'none';
+    setStatus('');
+    updateSendState();
+  });
+
+  function updateSendState(){
+    sendBtn.disabled = !(imageFile && apiKeyInput.value.trim());
+  }
+
+  function setStatus(msg, isError){
+    statusEl.textContent = msg || '';
+    statusEl.className = isError ? 'error' : '';
+  }
+
+  function buildPrompt(){
+    const parts = [];
+    if (hairInput.value.trim()) parts.push('đổi kiểu tóc thành: ' + hairInput.value.trim());
+    if (outfitInput.value.trim()) parts.push('đổi trang phục thành: ' + outfitInput.value.trim());
+    if (colorInput.value.trim()) parts.push('tông màu chủ đạo: ' + colorInput.value.trim());
+    if (parts.length === 0) return 'giữ nguyên ảnh gốc, chỉ cải thiện chất lượng';
+    return 'Chỉnh sửa ảnh theo yêu cầu sau, giữ nguyên bố cục và tỷ lệ gốc: ' + parts.join('; ');
+  }
+
+  sendBtn.addEventListener('click', async () => {
+    const key = apiKeyInput.value.trim();
+    if (!key || !imageFile) return;
+
+    sendBtn.disabled = true;
+    resultCard.style.display = 'none';
+    statusEl.innerHTML = '<span class="spinner"></span> Đang gửi ảnh tới Pollinations...';
+
+    try {
+      const form = new FormData();
+      form.append('model', modelSelect.value);
+      form.append('prompt', buildPrompt());
+      form.append('image', imageFile, imageFile.name || 'image.png');
+
+      let resp;
+      try {
+        resp = await fetch('https://gen.pollinations.ai/v1/images/edits', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + key },
+          body: form
+        });
+      } catch (netErr) {
+        throw new Error('Không kết nối được tới Pollinations (kiểm tra mạng hoặc CORS). Chi tiết: ' + netErr.message);
+      }
+
+      if (resp.status === 404) {
+        throw new Error('Endpoint tải ảnh trực tiếp (v1/images/edits) không khả dụng cho tài khoản/model này. Hãy dùng bản "dán link ảnh" thay thế.');
+      }
+
+      let data;
+      try {
+        data = await resp.json();
+      } catch (e) {
+        throw new Error(`Phản hồi không hợp lệ từ API (HTTP ${resp.status}).`);
+      }
+
+      if (!resp.ok) {
+        const msg = (data && data.error && (data.error.message || data.error)) || `Lỗi HTTP ${resp.status}`;
+        throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      }
+
+      const item = data?.data?.[0];
+      if (!item) throw new Error('API không trả về ảnh nào.');
+
+      let outUrl;
+      if (item.b64_json) {
+        outUrl = 'data:image/png;base64,' + item.b64_json;
+      } else if (item.url) {
+        outUrl = item.url;
+      } else {
+        throw new Error('Không nhận diện được định dạng kết quả trả về.');
+      }
+
+      resultImg.src = outUrl;
+      downloadLink.href = outUrl;
+      resultCard.style.display = 'block';
+      setStatus('✅ Hoàn tất.');
+    } catch (err) {
+      setStatus('❌ ' + (err.message || 'Có lỗi xảy ra.'), true);
+    } finally {
+      updateSendState();
+    }
+  });
+
+  updateSendState();
+})();
+</script>
+</body>
+</html>
