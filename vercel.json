@@ -1,0 +1,6 @@
+{
+  "outputDirectory": "public",
+  "functions": {
+    "api/deob.py": { "maxDuration": 300, "includeFiles": "deobf/**" }
+  }
+}
