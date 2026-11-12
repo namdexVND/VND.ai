@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lua Deobfuscator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<h1>Lua Deobfuscator</h1>
+<p class="sub">Tải file .lua lên, trang sẽ tự giải mã và tạo file kết quả cho bạn. Mọi xử lý chạy ngay trong trình duyệt.</p>
+<label id="drop"><input type="file" id="f" accept=".lua,.luau,.txt,text/plain"><b>Chọn file hoặc kéo thả vào đây</b><span>.lua / .luau / .txt</span></label>
+<div class="row"><label>Chế độ <select id="mode"><option value="auto">Tự động (server sâu, dự phòng trình duyệt)</option><option value="fast">Server nhanh (chỉ trace)</option><option value="local">Chỉ trình duyệt</option></select></label><span id="eng" class="sub">Đang kiểm tra máy chủ...</span></div>
+<details><summary>Hoặc dán code trực tiếp</summary><textarea id="in" spellcheck="false" placeholder="Dán code Lua đã bị làm rối..."></textarea><button id="go">Giải mã</button></details>
+<div id="msg"></div>
+<section id="res" hidden>
+<div class="stats" id="stats"></div>
+<div class="warn" id="warn" hidden></div>
+<details id="log" hidden><summary>Nhật ký engine</summary><pre id="logt"></pre></details>
+<h2>Báo cáo nhanh</h2><ul id="rep"></ul>
+<h2>Kết quả</h2>
+<textarea id="out" readonly spellcheck="false"></textarea>
+<button id="dl">Tải file kết quả</button><button id="cp" class="ghost">Sao chép</button>
+<div id="note" class="sub" style="font-size:12.5px;margin-top:8px">File tải về có tên *.deobf.lua.</div>
+</section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
